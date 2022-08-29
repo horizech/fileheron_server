@@ -1,3 +1,7 @@
+## 1.0.3
+
+-   Updated readme and examples.
+
 ## 1.0.2
 
 -   Bugfixes.
