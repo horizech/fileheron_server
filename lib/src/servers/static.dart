@@ -28,12 +28,30 @@ class StaticServer {
     try {
       if (_params.ssl) {
         var serverContext = SecurityContext();
-        serverContext.useCertificateChain(_params.certificateChain);
-        if (_params.serverKeyPassword.isNotEmpty) {
-          serverContext.usePrivateKey(_params.serverKey,
+        if (_params.certificateChain == null ||
+            _params.certificateChain!.isEmpty) {
+          stdout.writeln('Could not find certificate chain.');
+          // 64: command line usage error
+          exitCode = 64;
+          exit(exitCode);
+        }
+
+        if ((_params.serverKeyPassword == null ||
+                _params.serverKeyPassword!.isEmpty) &&
+            (_params.serverKey == null || _params.serverKey!.isEmpty)) {
+          stdout.writeln('Could not find server key or password.');
+          // 64: command line usage error
+          exitCode = 64;
+          exit(exitCode);
+        }
+
+        serverContext.useCertificateChain(_params.certificateChain!);
+        if (_params.serverKeyPassword != null &&
+            _params.serverKeyPassword!.isNotEmpty) {
+          serverContext.usePrivateKey(_params.serverKey!,
               password: _params.serverKeyPassword);
         } else {
-          serverContext.usePrivateKey(_params.serverKey);
+          serverContext.usePrivateKey(_params.serverKey!);
         }
         _server = await HttpServer.bindSecure(
             _params.hostname, _params.port, serverContext);

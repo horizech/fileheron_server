@@ -4,111 +4,124 @@ import 'package:args/args.dart';
 import 'package:fileheron_server/src/constants.dart';
 
 class ServerParams {
-  late String _hostname;
-  String get hostname => _hostname;
+  final String hostname;
+  final int port;
+  final String root;
+  final String? logFile;
+  final bool listDir;
+  final bool ssl;
+  final String? certificateChain;
+  final String? serverKey;
+  final String? serverKeyPassword;
 
-  late int _port;
-  int get port => _port;
+  ServerParams(
+      {this.hostname = kDefaultHost,
+      this.port = kDefaultPort,
+      this.root = kDefaultRoot,
+      this.logFile = kDefaultLogFile,
+      this.listDir = kDefaultListDir,
+      this.ssl = kDefaultSSL,
+      this.certificateChain = kDefaultCertificateChain,
+      this.serverKey = kDefaultServerKey,
+      this.serverKeyPassword = kDefaultServerKeyPassword});
 
-  late String _root;
-  String get root => _root;
-
-  late String _logFile;
-  String get logFile => _logFile;
-
-  late bool _listDir;
-  bool get listDir => _listDir;
-
-  late bool _ssl;
-  bool get ssl => _ssl;
-
-  late String _certificateChain;
-  String get certificateChain => _certificateChain;
-
-  late String _serverKey;
-  String get serverKey => _serverKey;
-
-  late String _serverKeyPassword;
-  String get serverKeyPassword => _serverKeyPassword;
-
-  ServerParams(List<String> args) {
+  factory ServerParams.fromArgs(List<String> args) {
     if (args.isNotEmpty) {
-      createParamsFromArguments(args);
-    }
-  }
+      var parser = ArgParser()
+        ..addOption('host', abbr: 'h', defaultsTo: kDefaultHost)
+        ..addOption('port', abbr: 'p', defaultsTo: '$kDefaultPort')
+        ..addOption('root', abbr: 'r', defaultsTo: kDefaultRoot)
+        ..addOption('logFile', abbr: 'l', defaultsTo: kDefaultLogFile)
+        ..addOption('listDir', abbr: 'd', defaultsTo: '$kDefaultListDir')
+        ..addOption('ssl', abbr: 's', defaultsTo: '$kDefaultSSL')
+        ..addOption('certificateChain',
+            abbr: 'c', defaultsTo: kDefaultCertificateChain)
+        ..addOption('serverKey', abbr: 'k', defaultsTo: kDefaultServerKey)
+        ..addOption('serverKeyPassword',
+            abbr: 'u', defaultsTo: kDefaultServerKeyPassword);
+      var result = parser.parse(args);
 
-  void createParamsFromArguments(List<String> args) {
-    var parser = ArgParser()
-      ..addOption('host', abbr: 'h', defaultsTo: 'localhost')
-      ..addOption('port', abbr: 'p', defaultsTo: '8080')
-      ..addOption('root', abbr: 'r', defaultsTo: 'public')
-      ..addOption('logFile', abbr: 'l', defaultsTo: null)
-      ..addOption('listDir', abbr: 'd', defaultsTo: 'true')
-      ..addOption('ssl', abbr: 's', defaultsTo: 'false')
-      ..addOption('certificateChain', abbr: 'c', defaultsTo: null)
-      ..addOption('serverKey', abbr: 'k', defaultsTo: null)
-      ..addOption('serverKeyPassword', abbr: 'u', defaultsTo: null);
-    var result = parser.parse(args);
+      String h = result['host'];
 
-    _hostname = result['host'];
+      // For Google Cloud Run, we respect the PORT environment variable
+      String pStr = result['port'] ??
+          "$kDefaultPort"; // ?? Platform.environment['PORT'] ?? '8080';
+      int p = 0;
 
-    // For Google Cloud Run, we respect the PORT environment variable
-    var portStr = result['port'] ??
-        "$kDefaultPort"; // ?? Platform.environment['PORT'] ?? '8080';
-    try {
-      _port = int.tryParse(portStr) ?? kDefaultPort;
-    } catch (_) {
-      stdout.writeln('Could not parse port value "$portStr" into a number.');
-    }
+      try {
+        p = int.tryParse(pStr) ?? kDefaultPort;
+      } catch (_) {
+        stdout.writeln('Could not parse port value "$pStr" into a number.');
+        exitCode = 64;
+        exit(exitCode);
+      }
 
-    if (_port < 1) {
-      stdout.writeln('Could not parse port value "$portStr" into a number.');
-      // 64: command line usage error
-      exitCode = 64;
-      exit(exitCode);
-    }
-
-    _root = result['root'];
-
-    _logFile = result['logFile'];
-
-    var listDirStr = result['listDir'];
-    _listDir = listDirStr.toLowerCase() == 'true';
-
-    var sslStr = result['ssl'];
-    _ssl = sslStr.toLowerCase() == 'true';
-
-    if (_ssl) {
-      _certificateChain = result['certificateChain'] ?? "";
-      _serverKey = result['serverKey'] ?? "";
-      _serverKeyPassword = result['serverKeyPassword'] ?? "";
-
-      if (_certificateChain.isEmpty) {
-        stdout.writeln('Could not find certificate chain.');
+      if (p < 1) {
+        stdout.writeln('Could not parse port value "$pStr" into a number.');
         // 64: command line usage error
         exitCode = 64;
         exit(exitCode);
       }
 
-      if (_serverKey.isEmpty) {
-        stdout.writeln('Could not find server key.');
-        // 64: command line usage error
-        exitCode = 64;
-        exit(exitCode);
+      String r = result['root'];
+
+      String listDirStr = result['listDir'];
+      bool d = listDirStr.toLowerCase() == 'true';
+
+      String l = result['logFile'];
+
+      String sslStr = result['ssl'];
+      bool s = sslStr.toLowerCase() == 'true';
+
+      String c = "";
+      String k = "";
+      String u = "";
+
+      if (s) {
+        c = result['certificateChain'] ?? "";
+        k = result['serverKey'] ?? "";
+        u = result['serverKeyPassword'] ?? "";
+
+        if (c.isEmpty) {
+          stdout.writeln('Could not find certificate chain.');
+          // 64: command line usage error
+          exitCode = 64;
+          exit(exitCode);
+        }
+
+        if (k.isEmpty) {
+          stdout.writeln('Could not find server key.');
+          // 64: command line usage error
+          exitCode = 64;
+          exit(exitCode);
+        }
       }
+
+      ServerParams params = ServerParams(
+          hostname: h,
+          port: p,
+          root: r,
+          logFile: l,
+          listDir: d,
+          ssl: s,
+          certificateChain: c,
+          serverKey: k,
+          serverKeyPassword: u);
+      return params;
     }
+    return ServerParams();
   }
 
   void printParams() {
-    print('Hostname: ${_hostname.toString()}');
-    print('Port: ${_port.toString()}');
-    print('Root Dir: ${_root.toString()}');
-    print('Log File: ${_logFile.toString()}');
-    print('List Dir: ${_listDir.toString()}');
+    print('Hostname: ${hostname.toString()}');
+    print('Port: ${port.toString()}');
+    print('Root Dir: ${root.toString()}');
+    print('Log File: ${logFile.toString()}');
+    print('List Dir: ${listDir.toString()}');
 
-    print('SSL: ${_ssl.toString()}');
-    print('Certificate Chain: ${_certificateChain.toString()}');
-    print('Server Key: ${_serverKey.toString()}');
-    print('Server Key Password: ${_serverKeyPassword.toString()}');
+    print('SSL: ${ssl.toString()}');
+    print('Certificate Chain: ${certificateChain.toString()}');
+    print('Server Key: ${serverKey.toString()}');
+    print('Server Key Password: ${serverKeyPassword.toString()}');
   }
 }
