@@ -1,8 +1,4 @@
-/// Support for doing something awesome.
-///
-/// More dartdocs go here.
 library fileheron_server;
 
 export 'src/fileheron_server_base.dart';
-
-// TODO: Export any libraries intended for clients of this package.
+export 'src/models/server_params.dart';
