@@ -30,6 +30,10 @@ class RestServer {
     }
   }
 
+  void stop() {
+    _server.close();
+  }
+
   void serveRequest(HttpRequest request) async {
     if (_params.listDir) {
       print('Serving | Method: ${request.method} | Path: ${request.uri.path}');

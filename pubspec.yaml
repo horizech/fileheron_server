@@ -1,6 +1,6 @@
 name: fileheron_server
 description: A simple file server written in Dart.
-version: 1.0.3
+version: 1.0.4
 homepage: https://www.fileheron.com
 repository: https://github.com/horizech/fileheron_server
 

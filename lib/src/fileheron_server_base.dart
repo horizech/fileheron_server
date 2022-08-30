@@ -43,4 +43,19 @@ class FileHeronServer {
       exit(1);
     }
   }
+
+  void stop() {
+    if (_serverType == 'static') {
+      _staticServer.stop();
+    } else if (_serverType == 'rest') {
+      _restServer.stop();
+    } else {
+      print('No other Server type supported yet!');
+      exit(1);
+    }
+  }
+
+  void destroy() {
+    cleanGetIt();
+  }
 }

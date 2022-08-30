@@ -75,6 +75,10 @@ class StaticServer {
     }
   }
 
+  void stop() {
+    _server.close();
+  }
+
   void serveRequest(HttpRequest request) async {
     if (_params.listDir) {
       print('Sending: ${_params.root}${request.uri.toString()}');

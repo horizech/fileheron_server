@@ -6,3 +6,7 @@ final getIt = GetIt.instance;
 void setupGetIt(String? logFile) {
   getIt.registerSingleton<LogService>(LogService(logFile));
 }
+
+void cleanGetIt() {
+  getIt.unregister<LogService>();
+}

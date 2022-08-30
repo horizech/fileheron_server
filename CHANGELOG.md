@@ -1,3 +1,7 @@
+## 1.0.4
+
+-   Added stop server functionality.
+
 ## 1.0.3
 
 -   Updated readme and examples.
