@@ -1,3 +1,7 @@
+## 1.0.5
+
+-   SSL improvements and other enhancements.
+
 ## 1.0.4
 
 -   Added stop server functionality.

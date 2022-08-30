@@ -5,7 +5,7 @@ void exampleUsingParameters() {
   var server = FileHeronServer();
   ServerParams params = ServerParams(
       hostname: "locahost",
-      port: 8080,
+      port: 80,
       listDir: true,
       logFile: "log.txt",
       root: "public");

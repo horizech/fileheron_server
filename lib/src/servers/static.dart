@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:http_server/http_server.dart';
 
-import '../helpers/get_it.dart';
 import '../services/log.dart';
 import '../models/server_params.dart';
 
@@ -10,6 +9,7 @@ class StaticServer {
   late VirtualDirectory _staticFiles;
   late ServerParams _params;
   late HttpServer _server;
+  LogService? logService;
 
   void init(ServerParams params) {
     _params = params;
@@ -18,75 +18,76 @@ class StaticServer {
     _staticFiles.directoryHandler = (dir, request) /*2*/ {
       var indexUri = Uri.file(dir.path).resolve('index.html');
       if (params.listDir) {
-        print('Sending: $indexUri');
+        stdout.writeln('Sending: $indexUri');
       }
       _staticFiles.serveFile(File(indexUri.toFilePath()), request); /*3*/
     };
+
+    if (params.logFile != null && params.logFile!.isNotEmpty) {
+      logService = LogService(_params.logFile!);
+    }
   }
 
-  void start() async {
+  Future<bool> start() async {
     try {
       if (_params.ssl) {
-        var serverContext = SecurityContext();
         if (_params.certificateChain == null ||
             _params.certificateChain!.isEmpty) {
           stdout.writeln('Could not find certificate chain.');
-          // 64: command line usage error
-          exitCode = 64;
-          exit(exitCode);
+          return false;
         }
 
-        if ((_params.serverKeyPassword == null ||
-                _params.serverKeyPassword!.isEmpty) &&
-            (_params.serverKey == null || _params.serverKey!.isEmpty)) {
-          stdout.writeln('Could not find server key or password.');
-          // 64: command line usage error
-          exitCode = 64;
-          exit(exitCode);
+        if (_params.serverKey == null || _params.serverKey!.isEmpty) {
+          stdout.writeln('Could not find server key.');
+          return false;
         }
 
-        serverContext.useCertificateChain(_params.certificateChain!);
+        var chain =
+            Platform.script.resolve(_params.certificateChain!).toFilePath();
+        var key = Platform.script.resolve(_params.serverKey!).toFilePath();
+        var serverContext = SecurityContext()..useCertificateChain(chain);
+
         if (_params.serverKeyPassword != null &&
             _params.serverKeyPassword!.isNotEmpty) {
-          serverContext.usePrivateKey(_params.serverKey!,
-              password: _params.serverKeyPassword);
+          serverContext.usePrivateKey(key, password: _params.serverKeyPassword);
         } else {
-          serverContext.usePrivateKey(_params.serverKey!);
+          serverContext.usePrivateKey(key);
         }
+
         _server = await HttpServer.bindSecure(
             _params.hostname, _params.port, serverContext);
       } else {
         _server = await HttpServer.bind(_params.hostname, _params.port);
       }
     } catch (e) {
-      print(
+      stdout.writeln(
           'Error occured while starting server. Make sure the parameters are valid!');
-      // 64: command line usage error
-      exitCode = 64;
-      exit(exitCode);
     } finally {
-      print(
+      stdout.writeln(
           'Serving ${_params.root} at ${_params.ssl ? "https" : "http"}://${_server.address.host}:${_server.port}');
 
-      // await _server.forEach(serveRequest); /*4*/
-      await for (HttpRequest request in _server) {
-        serveRequest(request);
-      }
+      await _server.forEach(serveRequest);
     }
+    return true;
   }
 
-  void stop() {
-    _server.close();
+  Future<bool> stop() async {
+    try {
+      await _server.close(force: true);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   void serveRequest(HttpRequest request) async {
     if (_params.listDir) {
-      print('Sending: ${_params.root}${request.uri.toString()}');
+      stdout.writeln('Sending: ${_params.root}${request.uri.toString()}');
     }
 
-    getIt
-        .get<LogService>()
-        .log('Address: ${_params.root}${request.uri.toString()}');
+    if (logService != null) {
+      logService!.log('Method: ${request.method} | Path: ${request.uri.path}');
+    }
 
     await _staticFiles.serveRequest(request);
   }

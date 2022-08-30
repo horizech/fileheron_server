@@ -1,47 +1,55 @@
 import 'dart:io';
 
-import '../helpers/get_it.dart';
 import '../models/server_params.dart';
 import '../services/log.dart';
 
 class RestServer {
   late HttpServer _server;
   late ServerParams _params;
+  LogService? logService;
 
   void init(ServerParams params) {
     _params = params;
+    if (params.logFile != null && params.logFile!.isNotEmpty) {
+      logService = LogService(_params.logFile!);
+    }
   }
 
-  void start() async {
+  Future<bool> start() async {
     try {
       _server = await HttpServer.bind(_params.hostname, _params.port);
     } catch (e) {
-      print(
+      stdout.writeln(
           'Error occured while starting server. Make sure the parameters are valid!');
-      // 64: command line usage error
-      exitCode = 64;
-      exit(exitCode);
+      return false;
     } finally {
-      print(
+      stdout.writeln(
           'Serving ${_params.root} at http://${_server.address.host}:${_server.port}');
       await for (HttpRequest request in _server) {
         serveRequest(request);
       }
     }
+    return true;
   }
 
-  void stop() {
-    _server.close();
+  Future<bool> stop() async {
+    try {
+      await _server.close(force: true);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   void serveRequest(HttpRequest request) async {
     if (_params.listDir) {
-      print('Serving | Method: ${request.method} | Path: ${request.uri.path}');
+      stdout.writeln(
+          'Serving | Method: ${request.method} | Path: ${request.uri.path}');
     }
 
-    getIt
-        .get<LogService>()
-        .log('Method: ${request.method} | Path: ${request.uri.path}');
+    if (logService != null) {
+      logService!.log('Method: ${request.method} | Path: ${request.uri.path}');
+    }
 
     var response = request.response;
     response.write('Hello, world!');

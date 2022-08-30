@@ -1,5 +1,6 @@
 const String kDefaultHost = 'localhost';
-const int kDefaultPort = 8080;
+const int kDefaultPort = 80;
+const int kDefaultSSLPort = 443;
 const String kDefaultRoot = 'public';
 const bool kDefaultListDir = true;
 const String? kDefaultLogFile = null;

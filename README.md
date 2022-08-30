@@ -30,7 +30,7 @@ void main(List<String> args) {
   var server = FileHeronServer();
   ServerParams params = ServerParams(
       hostname: "locahost",
-      port: 8080,
+      port: 80,
       listDir: true,
       logFile: "log.txt",
       root: "public");
@@ -46,7 +46,7 @@ You can also use runtime arguments directly to initialize server
 | Parameter              | Description               | Default Value | Possible Values |
 | ---------------------- | ------------------------- | :-----------: | --------------- |
 | host (-h)              | Hostname                  |   localhost   | valid address   |
-| port (-p)              | Port                      |     8080      | valid port      |
+| port (-p)              | Port                      |      80       | valid port      |
 | root (-r)              | Static folder             |    public     | valid folder    |
 | listDir (-d)           | Show each call in console |     true      | true, false     |
 | logFile (-l)           | Log file                  |     null      | log file name   |
@@ -69,13 +69,13 @@ void main(List<String> args) {
 and the commandline arguments could be passed as follows:
 
 ```dart
-fileheron --host localhost --port 8080 --root public --listDir true --logFile log.txt --ssl true --certificateChain server_chain.pem --serverKey server_key.pem --serverKeyPassword password
+fileheron --host localhost --port 80 --root public --listDir true --logFile log.txt --ssl true --certificateChain server_chain.pem --serverKey server_key.pem --serverKeyPassword password
 ```
 
 or
 
 ```dart
-fileheron -h localhost -p 8080 -r public -d true -l log.txt -s true -c server_chain.pem -k server_key.pem -u password
+fileheron -h localhost -p 80 -r public -d true -l log.txt -s true -c server_chain.pem -k server_key.pem -u password
 ```
 
 ## To be done
